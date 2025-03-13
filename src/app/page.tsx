@@ -47,7 +47,7 @@ export default function Home() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            Read our newwwwwwwwwwessssssssst docs
+            Read our newwwwwwwwwwessssssssst changedddddddd docs
           </a>
         </div>
       </main>
