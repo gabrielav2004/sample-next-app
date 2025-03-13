@@ -47,7 +47,7 @@ export default function Home() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            Read our newwwwwwwwwwessssssssst changedddddddd docs
+            Read our newwwwwwwwwwessssssssst changedddddddd if u see this Jesus Loves You Gabbs docs
           </a>
         </div>
       </main>
