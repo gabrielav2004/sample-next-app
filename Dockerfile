@@ -27,6 +27,6 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.ts ./next.config.ts
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
-COPY --from=builder /app/postcss.config.mjs ./postcss.config.mjs  # SCSS/PostCSS support
+COPY --from=builder /app/postcss.config.mjs ./postcss.config.mjs  
 USER nextjs
 CMD ["npm", "run", "start"]
