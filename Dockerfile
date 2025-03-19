@@ -11,23 +11,22 @@ COPY package.json package-lock.json ./
 RUN npm install --frozen-lockfile
 
 # Build stage
-FROM dependencies AS build
+FROM dependencies AS builder
 COPY . .  
 COPY --from=dependencies /app/node_modules ./node_modules
 RUN npm run build
 
 # Production stage
-FROM base AS production
+FROM node:20-slim AS production
+WORKDIR /app
 ENV NODE_ENV=production
-RUN addgroup --system --gid 1001 nextjs
-RUN adduser --system --uid 1001 nextjs
-COPY --from=build /app/.next ./.next
-COPY --from=build /app/public ./public
-COPY --from=build /app/src ./src  # Copy the src directory
-COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/next.config.ts ./next.config.ts
-COPY --from=build /app/tsconfig.json ./tsconfig.json
-COPY --from=build /app/postcss.config.mjs ./postcss.config.mjs  # SCSS/PostCSS support
-COPY --from=build /app/eslint.config.mjs ./eslint.config.mjs  # ESLint config
+RUN addgroup --system --gid 1001 nextjs && adduser --system --uid 1001 nextjs
+COPY --from=builder /app/package.json ./package.json
+RUN npm install --omit=dev
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/next.config.ts ./next.config.ts
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
+COPY --from=builder /app/postcss.config.mjs ./postcss.config.mjs  # SCSS/PostCSS support
 USER nextjs
 CMD ["npm", "run", "start"]
