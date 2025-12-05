@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Login to Docker Hubs
         uses: docker/login-action@v3
@@ -32,4 +34,13 @@ jobs:
           context: .
           push: true # Set to true to push the image to Docker Hub
           tags: ${{ secrets.DH_USER }}/sample-next-app:${{ env.DOCKER_IMAGE_TAG }}
+      
+      - name: Update Deployment Manifest
+        uses: fjogeleit/yaml-update-action@main 
+        with:
+          valueFile: 'manifest/deploy.yaml' # Path to your YAML manifest
+          propertyPath: '$.spec.template.spec.containers[0].image' # JSONPath to the image field
+          value: '${{ secrets.DH_USER }}/sample-next-app:${{ env.DOCKER_IMAGE_TAG }}' # The new image value
+          commitChange: true # Commit the changes back to the repository
+          message: 'Update Docker image tag to ${{ env.DOCKER_IMAGE_TAG }}'
    
