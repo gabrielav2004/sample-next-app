@@ -5,7 +5,7 @@ metadata:
   labels:
     app: nextjs-app
 spec:
-  replicas: 1 # You can increase this for high availability
+  replicas: 1
   selector:
     matchLabels:
       app: nextjs-app
@@ -15,7 +15,7 @@ spec:
         app: nextjs-app
     spec:
       containers:
-      - name: nextjs-app
-        image: sainiranjanv/sample-next-app:v1 # Replace with your image
-        ports:
-        - containerPort: 3000 
+        - name: nextjs-app
+          image: sainiranjanv/sample-next-app:v7
+          ports:
+            - containerPort: 3000
