@@ -39,6 +39,7 @@ jobs:
         uses: fjogeleit/yaml-update-action@main
         with:
           valueFile: 'manifest/deploy.yaml' # Path to your YAML manifest
+          masterBranchName: main
           propertyPath: '$.spec.template.spec.containers[0].image' # JSONPath to the image field
           value: '${{ secrets.DH_USER }}/sample-next-app:${{ env.DOCKER_IMAGE_TAG }}' # The new image value
           commitChange: true # Commit the changes back to the repository
