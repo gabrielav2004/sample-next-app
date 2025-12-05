@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nextjs-app-service
+spec:
+  selector:
+    app: nextjs-app # Matches the labels of the Next.js pods
+  ports:
+    - protocol: TCP
+      port: 80 # Port exposed by the Service
+      targetPort: 3000 # Port on the pods where Next.js is listening
+  type: LoadBalancer # Exposes the Service with a public IP
