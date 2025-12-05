@@ -36,7 +36,7 @@ jobs:
           tags: ${{ secrets.DH_USER }}/sample-next-app:${{ env.DOCKER_IMAGE_TAG }}
       
       - name: Update Deployment Manifest
-        uses: fjogeleit/yaml-update-action@main 
+        uses: fjogeleit/yaml-update-action@main
         with:
           valueFile: 'manifest/deploy.yaml' # Path to your YAML manifest
           propertyPath: '$.spec.template.spec.containers[0].image' # JSONPath to the image field
