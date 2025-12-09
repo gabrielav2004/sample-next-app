@@ -65,15 +65,14 @@ jobs:
 
       # Step 3: Send webhook to Flask listener
       - name: Send Deployment Webhook
-        id: deploy
-        uses: joelwmale/webhook-action@master
+        uses: joelwmale/webhook-action@v3
         with:
           url: ${{ secrets.DEPLOY_WEBHOOK_URL }}
-          method: POST
           headers: |
-            {"X-Hub-Signature": "${{ steps.sign.outputs.sig }}", "Content-Type": "application/json"}
+              {"X-Hub-Signature": "${{ steps.sign.outputs.sig }}", "Content-Type": "application/json"}
           body: |
-            $(cat payload.json)
+              $(cat payload.json)
+
 
       # Step 4: Check response and fail workflow if deployment fails
       - name: Check Deployment Response
