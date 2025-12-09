@@ -37,44 +37,40 @@ jobs:
           push: true # Set to true to push the image to Docker Hub
           tags: ${{ secrets.DH_USER }}/sample-next-app:${{ env.DOCKER_IMAGE_TAG }}
    
-      - name: Create JSON Payload
+       # 1️⃣ Prepare compact payload
+      - name: Prepare Payload
         id: payload
         run: |
-          cat <<EOF > payload.json
-          {
-            "repo": "${{ github.repository }}",
-            "commit_sha": "${{ github.sha }}",
-            "commit_message": "${{ github.event.head_commit.message }}",
-            "actor": "${{ github.actor }}",
-            "pusher": "${{ github.actor }}",
-            "run_id": "${{ github.run_id }}",
-            "run_number": "${{ github.run_number }}",
-            "image_name": "${{ secrets.DH_USER }}/sample-next-app",
-            "image_tag": "${{ env.DOCKER_IMAGE_TAG }}",
-            "deploy_env": "production"
-          }
-          EOF
+          JSON=$(jq -c -n \
+            --arg repo "$GITHUB_REPOSITORY" \
+            --arg sha "$GITHUB_SHA" \
+            --arg msg "${GITHUB_EVENT_HEAD_COMMIT_MESSAGE}" \
+            --arg actor "$GITHUB_ACTOR" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_number "$GITHUB_RUN_NUMBER" \
+            --arg image_name "my_app" \
+            --arg image_tag "v$GITHUB_RUN_NUMBER" \
+            --arg deploy_env "production" \
+            '{repo:$repo, commit_sha:$sha, commit_message:$msg, actor:$actor, run_id:$run_id, run_number:$run_number, image_name:$image_name, image_tag:$image_tag, deploy_env:$deploy_env}')
+          echo "json=$JSON" >> $GITHUB_OUTPUT
 
-      # Step 2: Compute HMAC SHA256 signature
+      # 2️⃣ Compute HMAC signature using secret
       - name: Compute HMAC Signature
         id: sign
         run: |
-          BODY=$(cat payload.json)
-          SIG=$(printf "$BODY" | openssl dgst -sha256 -hmac "${{ secrets.WEBHOOK_SECRET }}" | cut -d " " -f2)
+          SIG=$(echo -n "${{ steps.payload.outputs.json }}" | openssl dgst -sha256 -hmac "${{ secrets.WEBHOOK_SECRET }}" | cut -d " " -f2)
           echo "sig=sha256=${SIG}" >> $GITHUB_OUTPUT
 
-      # Step 3: Send webhook to Flask listener
+      # 3️⃣ Send webhook to Flask listener
       - name: Send Deployment Webhook
+        id: deploy
         uses: joelwmale/webhook-action@master
         with:
           url: ${{ secrets.DEPLOY_WEBHOOK_URL }}
-          headers: |
-              {"X-Hub-Signature": "${{ steps.sign.outputs.sig }}", "Content-Type": "application/json"}
-          body: |
-              $(cat payload.json)
+          headers: '{"X-Hub-Signature": "${{ steps.sign.outputs.sig }}", "Content-Type": "application/json"}'
+          body: '${{ steps.payload.outputs.json }}'
 
-
-      # Step 4: Check response and fail workflow if deployment fails
+      # 4️⃣ Check response and fail workflow if deployment fails
       - name: Check Deployment Response
         run: |
           echo "Webhook Response: ${{ steps.deploy.outputs.response }}"
@@ -83,4 +79,3 @@ jobs:
             echo "Deployment failed!"
             exit 1
           fi
-   
