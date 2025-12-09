@@ -36,14 +36,52 @@ jobs:
           context: .
           push: true # Set to true to push the image to Docker Hub
           tags: ${{ secrets.DH_USER }}/sample-next-app:${{ env.DOCKER_IMAGE_TAG }}
-      
-      - name: Update Deployment Manifest
-        uses: fjogeleit/yaml-update-action@main
+   
+      - name: Create JSON Payload
+        id: payload
+        run: |
+          cat <<EOF > payload.json
+          {
+            "repo": "${{ github.repository }}",
+            "commit_sha": "${{ github.sha }}",
+            "commit_message": "${{ github.event.head_commit.message }}",
+            "actor": "${{ github.actor }}",
+            "pusher": "${{ github.actor }}",
+            "run_id": "${{ github.run_id }}",
+            "run_number": "${{ github.run_number }}",
+            "image_name": "${{ secrets.DH_USER }}/sample-next-app",
+            "image_tag": "${{ env.DOCKER_IMAGE_TAG }}",
+            "deploy_env": "production"
+          }
+          EOF
+
+      # Step 2: Compute HMAC SHA256 signature
+      - name: Compute HMAC Signature
+        id: sign
+        run: |
+          BODY=$(cat payload.json)
+          SIG=$(printf "$BODY" | openssl dgst -sha256 -hmac "${{ secrets.WEBHOOK_SECRET }}" | cut -d " " -f2)
+          echo "sig=sha256=${SIG}" >> $GITHUB_OUTPUT
+
+      # Step 3: Send webhook to Flask listener
+      - name: Send Deployment Webhook
+        id: deploy
+        uses: joelwmale/webhook-action@v3
         with:
-          valueFile: 'manifest/deploy.yaml' # Path to your YAML manifest
-          masterBranchName: main
-          propertyPath: '$.spec.template.spec.containers[0].image' # JSONPath to the image field
-          value: '${{ secrets.DH_USER }}/sample-next-app:${{ env.DOCKER_IMAGE_TAG }}' # The new image value
-          commitChange: true # Commit the changes back to the repository
-          message: 'Update Docker image tag to ${{ env.DOCKER_IMAGE_TAG }}'
+          url: ${{ secrets.DEPLOY_WEBHOOK_URL }}
+          method: POST
+          headers: |
+            {"X-Hub-Signature": "${{ steps.sign.outputs.sig }}", "Content-Type": "application/json"}
+          body: |
+            $(cat payload.json)
+
+      # Step 4: Check response and fail workflow if deployment fails
+      - name: Check Deployment Response
+        run: |
+          echo "Webhook Response: ${{ steps.deploy.outputs.response }}"
+          STATUS=$(echo "${{ steps.deploy.outputs.response }}" | jq -r '.status')
+          if [[ "$STATUS" != "success" ]]; then
+            echo "Deployment failed!"
+            exit 1
+          fi
    
