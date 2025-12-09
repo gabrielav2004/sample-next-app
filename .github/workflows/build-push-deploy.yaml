@@ -65,7 +65,7 @@ jobs:
 
       # Step 3: Send webhook to Flask listener
       - name: Send Deployment Webhook
-        uses: joelwmale/webhook-action@v3
+        uses: joelwmale/webhook-action@master
         with:
           url: ${{ secrets.DEPLOY_WEBHOOK_URL }}
           headers: |
