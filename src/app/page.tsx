@@ -21,7 +21,7 @@ export default function Home() {
             .
           </li>
           <li className="tracking-[-.01em]">
-            Save and see your changes instantly. Grafana Loki Alloy Test - 8
+            Save and see your changes instantly. Grafana Loki Alloy Test - 9
           </li>
         </ol>
 
